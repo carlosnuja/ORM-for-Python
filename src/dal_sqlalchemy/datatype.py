@@ -5,7 +5,7 @@ Created on 25/01/2011
 '''
 
 import sqlalchemy 
-from sqlalchemy import Table, Column, Integer, ForeignKey, and_, select
+from sqlalchemy import Table, Column, Integer, ForeignKey, and_, select, Index
 from sqlalchemy.sql import bindparam
 
 import dal
@@ -138,7 +138,7 @@ def create_type(name, base=None):
     setattr(cls, 'table', table)
         
 
-def create_field(name, type_field, size, is_list, belongs_to):
+def create_field(name, type_field, size, is_list, belongs_to, indexed):
     name = unicode(name)
     belongs_to = unicode(belongs_to)
     belongs_to_id = get_type_id(belongs_to)
@@ -153,7 +153,8 @@ def create_field(name, type_field, size, is_list, belongs_to):
                                            type_id=type_id,
                                            belongs_to_id=belongs_to_id,
                                            size=size,
-                                           is_list=is_list)
+                                           is_list=is_list, 
+                                           indexed=indexed)
         id = r.lastrowid
     except Exception as e:
         print e
@@ -177,7 +178,8 @@ def create_field(name, type_field, size, is_list, belongs_to):
                                'name':name, 
                                'type_id':type_id,
                                'size':size,
-                               'is_list': is_list})
+                               'is_list': is_list,
+                               'indexed':indexed})
     if is_list:
         gen_field_list(belongs_to, type_field, name)   
     else:   
@@ -218,7 +220,7 @@ def get_type_data(type_obj):
 def get_fields(type_obj):
     if type(type_obj) is int:
         type_id = type_obj
-    else: 
+    else:     
         type_id = get_type_id(type_obj)    
     fields={}
     try:
@@ -242,18 +244,33 @@ def get_field_data(type_obj, field_name):
                 'name': r['name'], 
                 'type_id': r['type_id'],
                 'size': r['size'],
-                'is_list': r['is_list']}
+                'is_list': r['is_list'],
+                'indexed': r['indexed']}
     else:
         return None
     
-def create_acceleration(self, type_obj, field_name):
-    id_type = get_type_id(type_obj)
-    '''try:
-         r = dals.index_acc().insert().execute(type_id = id_type, atrib_id= field_, type_id_ext=)
-         i = Index('someindex', mytable.c.col5)
-            SQLi.create(engine) '''
+def create_simple_acc(belongs_to, field_name):
+    ''' Es crea un index al valor del camp que li passem per parametre,  field_name es el atribut del objecte del objecte
+    que li indiquem amb belongs_to. Els dos parametres han de contenir un string'''
+    field_name = unicode(field_name)
+    belongs_to = unicode(belongs_to)
+    belongs_to_id = get_type_id(belongs_to)
+    def create_field_index(belongs_to, field_name):
+        i = Index(gen_index_name(belongs_to, field_name), dals.table_space[dals.composeTableName(belongs_to, field_name)].c.value)
+        i.create(dals.metadata.bind)
+        r = dals.field_def.update().where(and_(dals.field_def.c.name==field_name, dals.field_def.c.belongs_to_id==belongs_to_id)).values(indexed=True).execute()
+    dals.transaction(create_field_index, belongs_to, field_name)
+    dal.mc.update_field_data(belongs_to_id, field_name)
     
-    0
-def add_column_reference(self, field): 
+    
+def create_compose_acc(field_name, belongs_to, type_obj): 
+    field_name = unicode(field_name)
+    belongs_to = unicode(belongs_to)
+    belongs_to_id = get_type_id(belongs_to)
+    type_id = get_type_id(type_obj)
     '''Es tracta de afegir a les taules d'instancies d'atributs dels objectes una columna extra amb la referencia directe al objecte
     append_column(column_name)'''
+    '''  '''
+    
+def gen_index_name(belongs_to, field_name):
+    return 'idx_%s_%s' % (str(belongs_to), str(field_name))

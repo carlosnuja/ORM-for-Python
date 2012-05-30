@@ -22,25 +22,25 @@ def create_type_if_not_exists(name):
 
 def create_objects():
     if create_type_if_not_exists('Post'):
-        dt.create_field('title', 'string', 256, False, 'Post')
-        dt.create_field('text', 'string', 256, False, 'Post')
-        dt.create_field('subtitle', 'string', 256, False, 'Post')
+        dt.create_field('title', 'string', 256, False, 'Post', False)
+        dt.create_field('text', 'string', 256, False, 'Post', False)
+        dt.create_field('subtitle', 'string', 256, False, 'Post', False)
   
     if create_type_if_not_exists('Thread'):
-        dt.create_field('title', 'string', 256, False, 'Thread')
-        dt.create_field('posts', 'Post', 0, True, 'Thread')
+        dt.create_field('title', 'string', 256, False, 'Thread', False)
+        dt.create_field('posts', 'Post', 0, True, 'Thread', False)
        
     if create_type_if_not_exists('Board'):
-        dt.create_field('name', 'string', 256, False, 'Board')
-        dt.create_field('threads', 'Thread', 0, True, 'Board')
-        dt.create_field('sub_boards', 'Board', 0, True, 'Board')
+        dt.create_field('name', 'string', 256, False, 'Board', False)
+        dt.create_field('threads', 'Thread', 0, True, 'Board', False)
+        dt.create_field('sub_boards', 'Board', 0, True, 'Board', False)
 
     if create_type_if_not_exists('Forum'):
-        dt.create_field('name', 'string', 256, False, 'Forum')
-        dt.create_field('boards', 'Board', 0, True, 'Forum')
+        dt.create_field('name', 'string', 256, False, 'Forum', False)
+        dt.create_field('boards', 'Board', 0, True, 'Forum', False)
 
     if create_type_if_not_exists('Web'):
-        dt.create_field('forum', 'Forum', 0, False, 'Web')
+        dt.create_field('forum', 'Forum', 0, False, 'Web', False)
     
 
 def initData(from_scratch):
@@ -240,11 +240,14 @@ def initData(from_scratch):
         f1.boards.append(b6)
         f1.save()
         
-        o=b62.threads.all().filter('title').fetch()
+        result = dt.get_field_data("Thread", "title" )
+        dt.create_simple_acc('Post', 'title')
+        print 'Thread: %s' % result['size']
+        '''o=b62.threads.all().filter('title').fetch()'''
         '''o1=dal.object.Thread.all().fetch()'''
         print "El board b62: %s" % b62.name
-        for i in o:
-            print 'thread: %s' % i.title
+        '''for i in o:
+            print 'thread: %s' % i.title'''
          
                     
 

@@ -1,13 +1,7 @@
 '''
-Created on 17/11/2010
-
-@author: imartin
-'''
-
-'''
 Created on 16/11/2010
 
-@author: imartin
+@author: carlosnuja
 '''
 
 def create_type(name):
@@ -26,4 +20,10 @@ def get_fields(type_name):
     pass
 
 def get_field_data(type_name, field_name):
+    pass
+
+def create_simple_acc(belongs_to, field_name):
+    pass
+
+def create_compose_acc(field_name, belongs_to, type_obj):
     pass

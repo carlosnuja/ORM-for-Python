@@ -45,14 +45,14 @@ class IsList(Exception):
         self.name=name
         
     def __str__(self):
-        return "Error: "+self.name+" es una llista"
+        return "Error: "+self.name+" es una lista"
     
 class IsNotList(Exception):
     def __init__(self, name):
         self.name=name
         
     def __str__(self):
-        return "Error: "+self.name+" no es una llista"
+        return "Error: "+self.name+" no es una lista"
         
         
         

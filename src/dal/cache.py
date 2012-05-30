@@ -21,6 +21,8 @@ class Cache:
         self.mc.set(key, data)
     def get(self, key):
         return self.mc.get(key)
+    def delete(self, key, time):
+        self.mc.delete(key, time)
     
     def get_type_data(self, type_obj):
         data = self.mc.get(gen_key_type(type_obj))
@@ -49,6 +51,13 @@ class Cache:
         if not fd:
             fd = dt.get_field_data(type_obj, name)
             self.mc.set(key, fd)
+        return fd
+    
+    def update_field_data(self, type_obj, name):
+        key = gen_key_field(type_obj, name)
+        self.delete(key, 0)
+        fd = dt.get_field_data(type_obj, name)
+        self.mc.set(key, fd)
         return fd
     
     def set_type_fields(self, type_obj ,fields):

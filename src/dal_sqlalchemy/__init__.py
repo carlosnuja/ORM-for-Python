@@ -67,7 +67,8 @@ def init(config):
                       Column('name', String(30)),
                       Column('type_id', None, ForeignKey(obj_type_tname + '.id')),
                       Column('size', Integer),
-                      Column('is_list', Boolean))
+                      Column('is_list', Boolean), 
+                      Column('indexed', Boolean))
     
     global index_acc
     global index_acc_tname
@@ -127,7 +128,8 @@ def init_table_space():
                               'name': f['name'],
                               'type_id': f['type_id'],
                               'size': f['size'],
-                              'is_list': f['is_list']})
+                              'is_list': f['is_list'],
+                              'indexed': f['indexed']})
             if f['is_list']==0 : 
                 dt.gen_field(type_name, dal.mc.get_type_data(f['type_id']), f['name'])
             else :

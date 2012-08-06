@@ -58,7 +58,7 @@ def get_type_id(type_obj):
 
 def getTypeName(type_obj):
     ''' Se li pasa un parametre y retorna el nom del tipus del objecte '''
-    if type(type_obj) is int:
+    if type(type_obj) is long:
         try:
             return dal.mc.get('ot:%i' % type_obj)
         except Exception as e:
@@ -73,7 +73,7 @@ def getTypeFields(type_obj):
         unicode(type_obj)
     if type(type_obj) is unicode:
         type_obj=get_type_id(type_obj)
-    if type(type_obj) is int:
+    if type(type_obj) is long:
         try:
             return dal.mc.get_type_fields(type_obj)
         except Exception as e:
@@ -107,6 +107,7 @@ def releaseWriteLock(table, id):
         failed = True
     trans.commit()
     return failed
+
 
 def create_type(name, base=None):
     name = unicode(name)
@@ -165,12 +166,12 @@ def create_field(name, type_field, size, is_list, belongs_to, indexed):
             table = Table(dals.composeTableName(belongs_to, name), dals.metadata,
                           Column('id', Integer, primary_key=True),
                           Column('value', getColumnTypeId(type_id, size)),
-                          Column('obj_id', Integer, ForeignKey(dals.obj_type.c.id), unique=not is_list))
+                          Column('obj_id', Integer, ForeignKey(dals.table_space[dals.composeTableName(belongs_to)].c.id), unique=not is_list))
         else:
             table = Table(dals.composeTableName(belongs_to, name), dals.metadata,
                           Column('id', Integer, primary_key=True),
-                          Column('value', Integer, ForeignKey(dals.obj_type.c.id)),
-                          Column('obj_id', Integer, ForeignKey(dals.obj_type.c.id), unique=not is_list))
+                          Column('value', Integer, ForeignKey(dals.table_space[dals.composeTableName(type_field)].c.id)),
+                          Column('obj_id', Integer, ForeignKey(dals.table_space[dals.composeTableName(belongs_to)].c.id), unique=not is_list))
             
         table.create(dals.metadata.bind)
         dals.table_space[dals.composeTableName(belongs_to, name)] = table
@@ -264,13 +265,26 @@ def create_simple_acc(belongs_to, field_name):
     
     
 def create_compose_acc(field_name, belongs_to, type_obj): 
-    field_name = unicode(field_name)
-    belongs_to = unicode(belongs_to)
-    belongs_to_id = get_type_id(belongs_to)
-    type_id = get_type_id(type_obj)
-    '''Es tracta de afegir a les taules d'instancies d'atributs dels objectes una columna extra amb la referencia directe al objecte
-    append_column(column_name)'''
-    '''  '''
+    ''' Passem el camp del que volem crear un index amb lobjecte al que pertany i el tipus del objecte del que volem tenir una referencia per crear lindex'''
+    if type(type_obj) is str:
+        type_obj=unicode(type_obj)
+    if type(type_obj) is unicode:
+        type_obj=get_type_id(type_obj)
+    if type(belongs_to) is str:
+        belongs_to=unicode(belongs_to)
+    if type(belongs_to) is unicode:
+        belongs_to=get_type_id(belongs_to)
+    try:
+        belongs_fields = getTypeFields(belongs_to)
+        type_fields = getTypeFields(type_obj)
+        print type_fields
+        '''Es tracta de afegir a les taules d'instancies d'atributs dels objectes una columna extra amb la referencia directe al objecte append_column(column_name)'''
+    except Exception as e:
+        print e;
+            
+            
+            
+
     
 def gen_index_name(belongs_to, field_name):
     return 'idx_%s_%s' % (str(belongs_to), str(field_name))

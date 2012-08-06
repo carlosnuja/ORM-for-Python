@@ -14,14 +14,20 @@ class Object(object):
     
     table = None
      
-    def __init__(self, type_name, id=-1):
-        self.fields = []
+    def __init__(self, type_name, id=-1):    
+        self.fields=[]    
         if id >= 0:
             self.type_name = type_name
             self.id = id
             return
             
         self.type_id = dt.get_type_id(type_name) 
+        self.attributes = dt.getTypeFields(self.type_id)
+        for i in self.attributes:
+            if not self.attributes[i]:
+                setattr(self, i, None)
+            else: 
+                setattr(self, i, [])
         self.table = dals.table_space[dals.composeTableName(type_name)]
         self.__class__.table = dals.table_space[dals.composeTableName(type_name)]
         try:

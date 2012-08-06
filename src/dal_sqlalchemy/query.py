@@ -89,10 +89,14 @@ class Query(object):
         objs = []
         extrawork = False
         version = 1
+        fieldName = str(dt.getTypeName(self.type))
+        cls = getattr(dal.object, fieldName)
         if(len(self.fields) == 0):
             self.fields=dt.getTypeFields(self.type)
         if self.id != 0 :
+            ''' La crida ve desde una instancia: recuperem nomes els objectes que pertanyen a aquesta instancia''' 
             if self.order == None :
+                '''Si no es vol cap ordre especial sobtenen els registres utilitzan una crida en una de les taules '''
                 if self.limit==0 and self.offset!=0:
                     query = select([self.table.c.value]).where(self.table.c.obj_id==self.id).offset(self.offset)
                 elif self.limit!=0 and self.offset==0:
@@ -105,32 +109,45 @@ class Query(object):
                 extrawork = True
                 query = select([self.table.c.value]).where(self.table.c.obj_id==self.id)
         else :
+            '''La crida ve des dun objecte: '''
             if self.order != None :
-                if self.limit==0 and self.offset!=0 :
-                    query = select([self.table.c.value, self.table.c.obj_id]).limit(self.limit)
-                elif self.limit!=0 and self.offset==0 :
-                    query = select([self.table.c.value, self.table.c.obj_id]).offset(self.offset).limit(self.limit)
-                elif self.limit==0 and self.offset!=0 :
-                    query = select([self.table.c.value, self.table.c.obj_id]).offset(self.offset)
-                else :
-                    query = select([self.table.c.value, self.table.c.obj_id])
-            else :
-                version=2
                 table=dals.composeTableName(self.type, self.order)
                 if self.limit==0 and self.offset!=0 :
-                    query = select([table.c.value, table.c.obj_id]).order_by(table.c.value).limit(self.limit)
+                    oQuery = select([table.c.value, table.c.obj_id]).order_by(table.c.value).limit(self.limit)
                 elif self.limit!=0 and self.offset==0 :
-                    query = select([table.c.value, table.c.obj_id]).order_by(table.c.value).offset(self.offset).limit(self.limit)
+                    oQuery = select([table.c.value, table.c.obj_id]).order_by(table.c.value).offset(self.offset).limit(self.limit)
                 elif self.limit==0 and self.offset!=0 :
-                    query = select([table.c.value, table.c.obj_id]).order_by(table.c.value).offset(self.offset)
+                    oQuery = select([table.c.value, table.c.obj_id]).order_by(table.c.value).offset(self.offset)
                 else :
-                    query = select([table.c.value, table.c.obj_id]).order_by(table.c.value)
-        
+                    oQuery = select([table.c.value, table.c.obj_id]).order_by(table.c.value)
+                "aqui creamos una tabla con el orden de los ids"
+            else :
+                if self.limit==0 and self.offset!=0 :
+                    query = select([self.table.c.id]).order_by(self.table.c.id).limit(self.limit)
+                elif self.limit!=0 and self.offset==0 :
+                    query = select([self.table.c.id]).order_by(self.table.c.id).offset(self.offset).limit(self.limit)
+                elif self.limit==0 and self.offset!=0 :
+                    query = select([self.table.c.id]).order_by(self.table.c.id).offset(self.offset)
+                else :
+                    query = select([self.table.c.id]).order_by(self.table.c.id)
+                objs = {}
+                ids=dals.executeQuery(query).fetchall()
+                for i in ids:
+                    objs[i['id']]= cls() 
+                for nom in self.fields:
+                    if not self.fields[nom]:
+                        table=dals.composeTableName(self.type,nom)
+                        result = dals.executeQuery(select([dals.table_space[table].c.value, dals.table_space[table].c.obj_id]).order_by(dals.table_space[table].c.obj_id)).fetchall()
+                        for row in result:
+                            if row['obj_id'] in objs:
+                                setattr(objs[row['obj_id']], nom, row['value']) 
+                            else: 
+                                break;
+                return objs                                              
         result=dals.executeQuery(query).fetchall()
         if version == 1 :
             for row in result:
-                id_obj = row['value']
-                cls = getattr(dal.object, self.type)
+                id_obj = row['value']                
                 absObj = cls(id_obj)
                 for nom in self.fields:
                     if (self.fields[nom]==False):
